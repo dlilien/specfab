@@ -454,6 +454,38 @@ function a4_to_nlm(a2, a4) result(nlm)
     include "include/a4_to_nlm__body.f90"
 end
 
+
+!---------------------------------
+! Elmer to Spectral CONVERSION
+!---------------------------------
+
+function a2_to_nlm_elmer(a2) result(nlm)
+    
+    ! Given a^(2), returns the equivalent spectral coefs assuming the true ODF is truncated at L=2 (higher order modes vanish)
+
+    implicit none
+    
+    real(kind=dp), intent(in) :: a2(5)
+    complex(kind=dp) :: nlm(nlm_len)
+    
+    nlm = 0.0 ! init
+    include "include/a2_to_nlm_elmer__body.f90"
+end
+
+function a4_to_nlm_elmer(a2, a4) result(nlm)
+
+    ! Given a^(2) and a^(4), returns the equivalent spectral coefs assuming the true ODF is truncated at L=4 (higher order modes vanish)
+
+    implicit none
+    
+    real(kind=dp), intent(in) :: a2(5), a4(9)
+    complex(kind=dp) :: nlm(nlm_len)
+    REAL(Kind=DP) :: a4_1133, a4_1233, a4_1333, a4_2233, a4_2333, a4_3333
+    
+    nlm = 0.0 ! init
+    include "include/a4_to_nlm_elmer__body.f90"
+end
+
 function da2dt_DRX(tau, a2, a4)
     
     ! Returns DRX contribution to d/dt a^(2) --- useful routine for external tensorially-based fabric models 
@@ -475,6 +507,31 @@ function da2dt_DRX(tau, a2, a4)
     ! (3) spectral --> tensorial 
     da2dt_DRX = f_ev_c2( (1d0,0)/Sqrt(4*Pi), nlm(I_l2:(I_l4-1)) ) ! ...Assumes normalized ODF: n00 = 1/sqrt(4*pi) 
     da2dt_DRX = da2dt_DRX - identity/3.0 ! Remove time-constant isotropic (monopole) part due to calculating <c^2> using f_ev_c2() 
+end
+
+function da2dt_DRX_elmer(tau, a2, a4)
+    
+    ! Returns DRX contribution to d/dt a^(2) --- useful routine for external tensorially-based fabric models 
+    ! 
+    !  *** The caller must multiply with the appropriate rate factor Gamma_0(T, tau, ...) ***
+    
+    implicit none
+
+    real(kind=dp), intent(in) :: tau(3,3), a2(5), a4(9)
+    real(kind=dp) :: da2dt_DRX_mat(3,3)
+    real(kind=dp) :: da2dt_DRX_elmer(5)
+    complex(kind=dp) :: nlm(nlm_len), ddt_nlm(nlm_len)
+    
+    nlm = a4_to_nlm_elmer(a2, a4)
+    
+    ! (2) Calculate spectral evolution due to DRX
+    ddt_nlm = matmul(dndt_ij_DRX(nlm, tau), nlm) ! d/dt(nlm) = M_ij nlm_j 
+    
+    ! (3) spectral --> tensorial 
+    da2dt_DRX_mat = f_ev_c2( (1d0,0)/Sqrt(4*Pi), nlm(I_l2:(I_l4-1)) ) 
+    da2dt_DRX_elmer = (/da2dt_DRX_mat(1,1) - 1.0 / 3.0, da2dt_DRX_mat(2,2),&
+                        da2dt_DRX_mat(1,2), da2dt_DRX_mat(2,3) - 1.0 / 3.0,&
+                        da2dt_DRX_mat(1,3)/)
 end
 
 !---------------------------------
