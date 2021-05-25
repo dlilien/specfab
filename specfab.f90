@@ -529,8 +529,8 @@ function da2dt_DRX_elmer(tau, a2, a4)
     
     ! (3) spectral --> tensorial 
     da2dt_DRX_mat = f_ev_c2( (1d0,0)/Sqrt(4*Pi), nlm(I_l2:(I_l4-1)) ) 
-    da2dt_DRX_elmer = (/da2dt_DRX_mat(1,1) - 1.0 / 3.0, da2dt_DRX_mat(2,2),&
-                        da2dt_DRX_mat(1,2), da2dt_DRX_mat(2,3) - 1.0 / 3.0,&
+    da2dt_DRX_elmer = (/da2dt_DRX_mat(1,1) - 1.0 / 3.0, da2dt_DRX_mat(2,2) - 1.0 / 3.0,&
+                        da2dt_DRX_mat(1,2), da2dt_DRX_mat(2,3),&
                         da2dt_DRX_mat(1,3)/)
 end
 
