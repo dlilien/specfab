@@ -8,8 +8,8 @@ program demo
     implicit none
 
     ! Numerics
-    real, parameter    :: dt = 0.1 * 3.154e+7 ! 1/10 year
-    integer, parameter :: Nt = 500 ! Number of time steps
+    real, parameter    :: dt = 0.1 ! 1/10 year
+    integer, parameter :: Nt = 2 ! Number of time steps
 
     ! Constants and argv strings    
     integer, parameter :: dp = 8
@@ -23,7 +23,7 @@ program demo
     real(kind=dp) :: ugrad(3,3), tau(3,3) ! Large-scale deformation tensors
 
     ! DRX
-    real(kind=dp), parameter :: Gamma0 = 1d-8 ! Sets DRX time scale
+    real(kind=dp), parameter :: Gamma0 = 1.0 ! Sets DRX time scale
 
     ! For dumping state to netCDF
     complex(kind=dp), allocatable   :: nlm_save(:,:)
@@ -136,6 +136,7 @@ program demo
         ! Tensorial representation
         a4 = a4_ijkl(nlm) ! ** Using true a^(4) from spectral formulation **
         a2_save(:,:,tt) = a2 + dt * Gamma0 * da2dt_DRX(tau, a2, a4)
+        write(*,*) da2dt_DRX(tau, a2, a4)
         
         ! Set previous state = present state for next loop entry
         nlm = nlm_save(:,tt) 

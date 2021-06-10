@@ -5,13 +5,14 @@
 program demo
 
     use specfab    
+    use tensorproducts
     use netcdf
     
     implicit none
 
     ! Numerics
-    real, parameter    :: dt = 0.01 * 3.154e+7 ! 1/10 year
-    integer, parameter :: Nt = 10 ! Number of time steps
+    real, parameter    :: dt = 0.01 ! 1/10 year
+    integer, parameter :: Nt = 5 ! Number of time steps
 
     ! Constants and argv strings    
     integer, parameter :: dp = 8
@@ -27,7 +28,7 @@ program demo
     real(kind=dp) :: ugrad(3,3), tau(3,3) ! Large-scale deformation tensors
 
     ! DRX
-    real(kind=dp), parameter :: Gamma0 = 1d-8 ! Sets DRX time scale
+    real(kind=dp), parameter :: Gamma0 = 0.1 ! Sets DRX time scale
 
     ! For dumping state to netCDF
     complex(kind=dp), allocatable   :: nlm_save(:,:)
@@ -200,6 +201,9 @@ program demo
         ai2 = (/ a2(1, 1), a2(2,2), a2(3,3), a2(1,2), a2(2,3), a2(1,3) /)
         ae4 = 0.0
         CALL IBOF(ai2, ae4)
+        write(*,*) '<D>'
+        write(*,*) (doubleinner22(MATMUL(tau,tau),a2)-doubleinner22(tau,doubleinner42(a4, tau))) / doubleinner22(tau,tau)
+        write(*,*) doubleinner22(MATMUL(tau,tau),a2), doubleinner22(tau,doubleinner42(a4, tau))    
         ae2 = a2_to_ae2(a2)
         a4 = ae4_to_a4(ae2, ae4)
         da2 = da2dt_DRX(tau, a2, a4)
