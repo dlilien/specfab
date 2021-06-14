@@ -136,9 +136,9 @@ program demo
     !-------------------------------------------------------------------
 
     call savestate(nlm, 1) ! Save initial state    
-    dndt_ROT = dndt_ij_ROT(eps,omg, 0*eps,0d0,0d0,0d0, 1d0) ! Assume constant strain-rate and spin with Taylor style plastic spin for lattice rotation (beta=1).
+    dndt_ROT = dndt_ij_LATROT(eps,omg, 0*eps,0d0,0d0,0d0, 1d0) ! Assume constant strain-rate and spin with Taylor style plastic spin for lattice rotation (beta=1).
     dndt_REG = f_nu_eps(nu0, eps) * dndt_ij_REG() ! Regularization: nu * (reg. mag.) *  reg. matrix
-    dndt_DRX = dndt_ij_DRX(nlm, eps)
+    dndt_DRX = dndt_ij_DDRX(nlm, eps)
             
     do tt = 2, Nt
 !        write(*,"(A9,I3)") '*** Step ', tt

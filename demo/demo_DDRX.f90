@@ -19,7 +19,7 @@ program demo
     ! Fabric state and evolution
     integer, parameter :: Lcap = 4 ! Expansion series truncation
     complex(kind=dp), allocatable :: nlm(:), nlmiso(:), dndt(:,:) ! Series expansion coefs and evolution matrix
-    real(kind=dp) :: a2(3,3), a4(3,3,3,3)
+    real(kind=dp) :: a2(3,3), a4(3,3,3,3), da2dt(3,3), da4dt(3,3,3,3)
     real(kind=dp) :: ugrad(3,3), tau(3,3) ! Large-scale deformation tensors
 
     ! DRX
@@ -27,7 +27,7 @@ program demo
 
     ! For dumping state to netCDF
     complex(kind=dp), allocatable   :: nlm_save(:,:)
-    real(kind=dp)                   :: a2_save(3,3,Nt), a2_true_save(3,3,Nt)
+    real(kind=dp)                   :: a2_true_save(3,3,Nt), a2_save(3,3,Nt), a4_save(3,3,3,3,Nt) 
     character(len=30) :: fname_sol
     integer :: ncid, c_did, time_did, dim_did, pair_did ! Dimension IDs
     integer :: id_cre,id_cim,id_lm, id_a2, id_a2_true ! Var IDs
@@ -97,14 +97,17 @@ program demo
     nlm    = [(0,ii=1,nlm_len)] ! Expansion coefs "n_l^m" are saved in the 1D array "nlm". Corresponding (l,m) values for the i'th coef (i.e. nlm(i)) are (l,m) = (lm(1,i),lm(2,i))
     nlmiso = [(0,ii=1,nlm_len)] 
     
+    ! Normalize such that integral over ODF is 1
     nlmiso(1) = (1,0)
-    nlmiso(1) = nlmiso(1)/f_ev_c0(nlmiso(1)) ! Normalize such that integral over ODF is 1
+    nlmiso(1) = nlmiso(1)/f_ev_c0(nlmiso(1)) 
 
     ! Init with isotropy
-    nlm = nlmiso
-    a2 = a2_ij(nlm) ! Init corresponding tensorial formulation
+    nlm = nlmiso      ! Spectral expansion
+    a2 = a2_ij(nlm)   ! Tensorial expansion
+    a4 = a4_ijkl(nlm) ! ...
     
-    nlm_save(:,1)  = nlm
+    ! Save initial state
+    nlm_save(:,1)       = nlm
     a2_true_save(:,:,1) = a2 
     a2_save(:,:,1)      = a2 
     
@@ -113,34 +116,35 @@ program demo
     !-------------------------------------------------------------------
     
     ! Model fabric evolution by representing fabric both spectrally and tensorially 
-    ! ...in order to comapre the effect of modelling d/dt a^(2) only using the python plotting script
 
     write(*,"(A13,I4,A5,F12.10,A4,I2,A10,I3,A1)") 'Numerics: Nt=', Nt, ', dt=', dt, ', L=', Lcap, ' (nlm_len=',nlm_len,')'
 
     do tt = 2, Nt
 
-        print *, '*** a^(2),  spectral: ', a2_true_save(:,:,tt-1)
-        print *, '*** a^(2), tensorial: ', a2_save(:,:,tt-1)
+        !print *, '*** a^(2), spec.: ', a2_true_save(:,:,tt-1)
+        !print *, '*** a^(2), tens.: ', a2_save(:,:,tt-1)
 
-        write(*,"(A9,I3)") '*** Step ', tt
+        !write(*,"(A9,I3)") '*** Step ', tt
 
-        print *,'*** nlm consistency check ***'
-        print *, nlm
-        print *, a4_to_nlm(a2_ij(nlm), a4_ijkl(nlm))
+        !print *,'*** nlm consistency check ***'
+        !print *, nlm
+        !print *, a2_to_nlm(a2_ij(nlm))
+        !print *, a4_to_nlm(a2_ij(nlm), a4_ijkl(nlm))
         
-        ! Spectral representation
-        dndt = Gamma0 * dndt_ij_DRX(nlm, tau) ! Tau is assumed constant, but since DRX rate depends on the state itself (i.e. DRX is nonlinear), it must be called for each time step.
+        ! Spectral expansion
+        dndt = Gamma0 * dndt_ij_DDRX(nlm, tau) ! Tau is assumed constant, but since DRX rate depends on the state itself (i.e. DRX is nonlinear), it must be called for each time step.
         nlm_save(:,tt) = nlm + dt * matmul(dndt, nlm) ! Spectral coefs evolve by a linear transformation
         a2_true_save(:,:,tt) = a2_ij(nlm)
 
-        ! Tensorial representation
-        a4 = a4_ijkl(nlm) ! ** Using true a^(4) from spectral formulation **
-        a2_save(:,:,tt) = a2 + dt * Gamma0 * da2dt_DRX(tau, a2, a4)
-        write(*,*) da2dt_DRX(tau, a2, a4)
+        ! Tensorial expansion
+        call daidt_DDRX(tau, Gamma0, a2, a4, da2dt, da4dt) ! Sets rate-of-change matrices da2dt and da4dt
+        a2_save(:,:,tt)     = a2 + dt*da2dt 
+        a4_save(:,:,:,:,tt) = a4 + dt*da4dt
         
         ! Set previous state = present state for next loop entry
         nlm = nlm_save(:,tt) 
-        a2  = a2_save(:,:,tt) 
+        a2  = a2_save(:,:,tt)
+        a4  = a4_save(:,:,:,:,tt)  
         
     end do
     
@@ -148,7 +152,7 @@ program demo
     ! Dump solution to netCDF
     !-------------------------------------------------------------------
     
-    write (fname_sol,"('solutions/DRX_',A5,'.nc')") arg_exp
+    write (fname_sol,"('solutions/DDRX_',A5,'.nc')") arg_exp
     call check( nf90_create(fname_sol, NF90_CLOBBER, ncid) )
     
     call check(nf90_put_att(ncid,NF90_GLOBAL, "tsteps", Nt))
@@ -183,7 +187,7 @@ program demo
 
     print *, 'Solution dumped in ', fname_sol
     print *, "Plot result:"
-    write(*,"(A25,A5)") "python3 plot_demo_DRX.py ", arg_exp
+    write(*,"(A26,A5)") "python3 plot_demo_DDRX.py ", arg_exp
 
 contains
 

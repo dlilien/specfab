@@ -1,4 +1,4 @@
-# N. M. Rathmann <rathmann@nbi.ku.dk> and D. A. Lilien <dlilien90@gmail.com>, 2020
+# N. M. Rathmann <rathmann@nbi.ku.dk> and D. A. Lilien <dlilien90@gmail.com>, 2020-2021
 
 #COMPILER=ifort -free -xHost -shared-intel -align all  -debug all -qopt-report-phase=vec -diag-disable 8291 -diag-disable 8290  
 COMPILER=gfortran -ffree-line-length-none -m64 -Wall -fPIC
@@ -33,11 +33,13 @@ $(DEMO)/elmer%: $(DEMO)/elmer%.f90 | lib$(SPECFAB).so $(ALLMODS)
 	$(COMPILER) $< $(ALLOBJS) $(OPTS) $(OPTSNETCDF) -o $@
 
 demo: $(DEMOS) $(SPECFAB).o
+	$(COMPILER) demo/demo_LATROT.f90 $(ALLOBJS) $(OPTS) $(OPTSNETCDF) -o demo/demo_LATROT
+	$(COMPILER) demo/demo_DDRX.f90   $(ALLOBJS) $(OPTS) $(OPTSNETCDF) -o demo/demo_DDRX
 	mkdir -p demo/solutions
 	@echo "\n*** To get going, try the demos:"
 	@echo "\n--- Lattice rotation ---"
-	@echo "cd demo; ./demo_ROT uc_zz :: uniaxial compression (uc) in the vertical (z)"
-	@echo "cd demo; ./demo_ROT ss_xz :: simple shear (ss) along the x--z plane"
+	@echo "cd demo; ./demo_LATROT uc_zz :: uniaxial compression (uc) in the vertical (z)"
+	@echo "cd demo; ./demo_LATROT ss_xz :: simple shear (ss) along the x--z plane"
 	@echo "\n--- Dynamic recrystallization ---"
 	@echo "cd demo; ./demo_DRX uc_zz :: uniaxial compression (uc) in the vertical (z)"
 	@echo "cd demo; ./demo_DRX ss_xz :: simple shear (ss) along the x--z plane"
@@ -47,10 +49,12 @@ demo: $(DEMOS) $(SPECFAB).o
 
 $(DEMO)/demo%: $(DEMO)/demo%.f90 | $(ALLOBJS) $(ALLMODS)
 	$(COMPILER) $< $(ALLOBJS) $(OPTS) $(OPTSNETCDF) -o $@
+	@echo "cd demo; ./demo_DDRX uc_zz :: uniaxial compression (uc) in the vertical (z)"
+	@echo "cd demo; ./demo_DDRX ss_xz :: simple shear (ss) along the x--z plane"
 
 # DL: I do not see a need for this one?
 demoso: lib$(SPECFAB).so
-	$(COMPILER) demo/demo_ROT.f90 -L./ -lspecfab $(OPTS) $(OPTSNETCDF) -o demo/demo_ROT
+	$(COMPILER) demo/demo_LATROT.f90 -L./ -lspecfab $(OPTS) $(OPTSNETCDF) -o demo/demo_LATROT
 	mkdir -p demo/solutions
 
 $(SPECFAB)py: $(SPECFAB).o
@@ -58,8 +62,8 @@ $(SPECFAB)py: $(SPECFAB).o
 	mkdir -p demo/solutions
 	cp specfabpy.cpython* demo/
 	@echo "\n*** To get going, try the demo:"
-	@echo "cd demo; python3 demo_ROT.py uc_zz ::: for uniaxial compression (uc) in the vertical (z)"
-	@echo "cd demo; python3 demo_ROT.py ss_xz ::: for simple shear (ss) along the x--z plane"
+	@echo "cd demo; python3 demo_LATROT.py uc_zz ::: for uniaxial compression (uc) in the vertical (z)"
+	@echo "cd demo; python3 demo_LATROT.py ss_xz ::: for simple shear (ss) along the x--z plane"
 
 ########################
 
@@ -89,5 +93,4 @@ clean:
 	rm -f demo/demo_ROT demo/demo_DRX demo/demo_FULL *.o *.mod *.so
 	
 clear:
-	rm -f demo/demo_ROT demo/demo_DRX demo/demo_FULL $(SPECFAB).o $(SPECFAB).mod *.so
-
+	rm -f demo/demo_LATROT demo/demo_DRX demo/demo_FULL $(SPECFAB).o $(SPECFAB).mod *.so
