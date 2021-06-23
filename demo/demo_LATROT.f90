@@ -11,7 +11,7 @@ program demo
 
     ! Numerics
     real, parameter    :: dt = 0.02 ! Time-step size
-    integer, parameter :: Nt = 10000  ! Number of time steps
+    integer, parameter :: Nt = 5000  ! Number of time steps
     integer            :: Lcap = 12     ! Expansion series truncation
     real(kind=dp)      :: nu0  = 5.0d-3 ! Regularization magnitude calibrated for demo with L=12
     
@@ -27,7 +27,7 @@ program demo
 
     ! Output for comparison
     real(kind=dp) :: a2(3,3)
-    real(kind=dp) :: a2_true_save(3,3,Nt)
+    real(kind=dp) :: a2_true_save(3,3,Nt), a4_true_save(3,3,3,3,Nt)
 
     ! For dumping state to netCDF
     complex(kind=dp), allocatable   :: nlm_save(:,:)
@@ -35,7 +35,7 @@ program demo
     real(kind=dp), dimension(3,Nt)  :: e1_save,e2_save,e3_save, p23_save,p12_save,p13_save, q23_save,q12_save,q13_save
     character(len=30) :: fname_sol
     integer :: ncid, c_did, time_did, eig_did, dim_did, pair_did ! Dimension IDs
-    integer :: id_cre,id_cim,id_lm, id_eig, id_e1,id_e2,id_e3, id_p23,id_p12,id_p13, id_q23,id_q12,id_q13,id_a2_true ! Var IDs
+    integer :: id_cre,id_cim,id_lm, id_eig, id_e1,id_e2,id_e3, id_p23,id_p12,id_p13, id_q23,id_q12,id_q13,id_a2_true,id_a4_true ! Var IDs
     integer :: id_Eeiej_lin, id_Eeiej_nlin, id_Epijqij_lin, id_Epijqij_nlin ! Var IDs
 
     if (command_argument_count() .ne. 1) then
@@ -125,6 +125,7 @@ program demo
 
     a2 = a2_ij(nlm) ! Init corresponding tensorial formulation
     a2_true_save(:,:,1) = a2 
+    a4_true_save(:,:,:,:,1) = a4_ijkl(nlm)
     
     write(*,"(A13,I4,A5,F12.10,A4,I2,A10,I3,A1)") 'Numerics: Nt=', Nt, ', dt=', dt, ', L=', Lcap, ' (nlm_len=',nlm_len,')'
 
@@ -141,6 +142,7 @@ program demo
         dndt = dndt_ROT + dndt_REG 
         nlm = nlm + dt * matmul(dndt, nlm) ! Spectral coefficients evolve by a linear transformation
         a2_true_save(:,:,tt) = a2_ij(nlm)
+        a4_true_save(:,:,:,:,tt) = a4_ijkl(nlm)
         call savestate(nlm, tt)
     end do
     
@@ -190,6 +192,7 @@ program demo
     call check( nf90_def_var(ncid, "q13",     NF90_DOUBLE, [dim_did, time_did], id_q13) )
     
     call check( nf90_def_var(ncid, "a2_true", NF90_DOUBLE, [dim_did,dim_did, time_did], id_a2_true) )    
+    call check( nf90_def_var(ncid, "a4_true", NF90_DOUBLE, [dim_did,dim_did,dim_did,dim_did, time_did], id_a4_true) )    
 
     call check( nf90_enddef(ncid) )
     
@@ -213,6 +216,7 @@ program demo
     call check( nf90_put_var(ncid, id_q13,  q13_save) )
     
     call check( nf90_put_var(ncid, id_a2_true, a2_true_save) )
+    call check( nf90_put_var(ncid, id_a4_true, a4_true_save) )
     call check( nf90_close(ncid) )
 
     print *, 'Solution dumped in ', fname_sol

@@ -467,6 +467,96 @@ subroutine daidt_LATROT(eps, omg, a2, a4, da2dt, da4dt)
     call dndt_to_daidt(ddt_nlm, nlm(1), da2dt, da4dt) ! spectral --> tensorial 
 end
 
+subroutine daidt_COMB(eps, tau, omg, a2, a4, alpha, nu, gamma0, da2dt, da4dt)
+    
+    ! Lattice rotation contribution to d/dt a^(2) and d/dt a^(4) 
+    ! Assumes Taylor hypothesis  (constant strain-rate over polycrystal).
+    
+    implicit none
+
+    real(kind=dp), intent(in)  :: eps(3,3), tau(3,3), omg(3,3), a2(3,3), a4(3,3,3,3), alpha, nu, gamma0
+    real(kind=dp), intent(out) :: da2dt(3,3), da4dt(3,3,3,3)
+    complex(kind=dp) :: nlm(nlm_len), ddt_nlm(nlm_len)
+    
+    nlm = a4_to_nlm(a2, a4) ! tensorial --> spectral, truncated at L=4
+    ddt_nlm = matmul(dndt_ij_LATROT(eps,omg, 0*eps,0d0,0d0,0d0, 1d0) * alpha&
+                     + gamma0 * dndt_ij_DDRX(nlm, tau)&
+                     + nu * dndt_ij_REG(),&
+                    nlm)
+    call dndt_to_daidt(ddt_nlm, nlm(1), da2dt, da4dt) ! spectral --> tensorial 
+end
+
+subroutine daidt_LATROT_elmer(COMP, SD, omg, ae2, ae4, daidt)
+    
+    ! Lattice rotation contribution to d/dt a^(2) and d/dt a^(4) 
+    ! Assumes Taylor hypothesis  (constant strain-rate over polycrystal).
+    
+    implicit none
+
+    INTEGER, intent(in)  :: COMP
+    real(kind=dp), intent(in)  :: SD(6), omg(3,3), ae2(5), ae4(9)
+    real(kind=dp), intent(out) :: daidt
+    real(kind=dp) :: a2(3,3), a4(3,3,3,3), eps(3,3)
+    real(kind=dp) :: da2dt(3,3), da4dt(3,3,3,3), da2dte(5), da4dte(9)
+    complex(kind=dp) :: nlm(nlm_len), ddt_nlm(nlm_len)
+    eps(1, 1) = SD(1)
+    eps(1, 2) = SD(4)
+    eps(1, 3) = SD(6)
+    eps(2, 1) = SD(4)
+    eps(2, 2) = SD(2)
+    eps(2, 3) = SD(5)
+    eps(3, 1) = SD(6)
+    eps(3, 2) = SD(5)
+    eps(3, 3) = SD(3)
+    
+    nlm = a4_to_nlm_elmer(ae2, ae4) ! tensorial --> spectral, truncated at L=4
+    ddt_nlm = matmul(dndt_ij_LATROT(eps,omg, 0*eps,0d0,0d0,0d0, 1d0), nlm) ! spectral evolution  --- d/dt nlm_i = M_ij nlm_j 
+    call dndt_to_daidt(ddt_nlm, nlm(1), da2dt, da4dt) ! spectral --> tensorial 
+    IF (COMP.LE.5) THEN
+        da2dte = a2_to_ae2(da2dt)
+        daidt = da2dte(COMP)
+    ELSE
+        da4dte = a4_to_ae4(da4dt)
+        daidt = da4dte(COMP - 5)
+    END IF
+end
+
+subroutine daidt_COMB_elmer(SD, tau, omg, ae2, ae4, alpha, nu2, nu4, gamma0, daidt)
+    
+    ! Lattice rotation contribution to d/dt a^(2) and d/dt a^(4) 
+    ! Assumes Taylor hypothesis  (constant strain-rate over polycrystal).
+    
+    implicit none
+    real(kind=dp), intent(in)  :: SD(6), tau(3,3), omg(3,3), ae2(5), ae4(9)
+    real(kind=dp), intent(in)  :: alpha, nu2, nu4, gamma0
+    real(kind=dp), intent(out) :: daidt(14)
+    real(kind=dp) :: a2(3,3), a4(3,3,3,3), eps(3,3)
+    real(kind=dp) :: da2dt(3,3), da4dt(3,3,3,3), da2dte(5), da4dte(9), da2dt_reg(3,3), da4dt_reg(3,3,3,3)
+    complex(kind=dp) :: nlm(nlm_len), ddt_nlm(nlm_len)
+    eps(1, 1) = SD(1)
+    eps(1, 2) = SD(4)
+    eps(1, 3) = SD(6)
+    eps(2, 1) = SD(4)
+    eps(2, 2) = SD(2)
+    eps(2, 3) = SD(5)
+    eps(3, 1) = SD(6)
+    eps(3, 2) = SD(5)
+    eps(3, 3) = SD(3)
+    
+    nlm = a4_to_nlm_elmer(ae2, ae4) ! tensorial --> spectral, truncated at L=4
+    ddt_nlm = matmul(dndt_ij_LATROT(eps,omg, 0*eps,0d0,0d0,0d0, 1d0) * alpha&
+                     + gamma0 * dndt_ij_DDRX(nlm, tau),&
+                     nlm)
+    call dndt_to_daidt(ddt_nlm, nlm(1), da2dt, da4dt) ! spectral --> tensorial 
+    ddt_nlm = matmul(dndt_ij_REG(), nlm)
+    call dndt_to_daidt(ddt_nlm, nlm(1), da2dt_reg, da4dt_reg) ! spectral --> tensorial 
+
+    daidt(1:5) = a2_to_ae2(da2dt) + nu2 * a2_to_ae2(da2dt_reg)
+    daidt(6:14) = a4_to_ae4(da4dt) + nu4 * a4_to_ae4(da4dt_reg)
+end
+
+
+
 !---------------------------------
 ! ELMER/TENSORIAL CONVERSION
 !---------------------------------
@@ -484,7 +574,6 @@ function ae4_to_a4(ae2, ae4) result(a4)
     real(kind=dp), intent(in) :: ae2(5), ae4(9)
     Real(kind=dp) :: a4(3,3,3,3)
     integer :: i,j,k,l
-    
     a4 = 0.0 ! init
     include "include/ae4_to_a4__body.f90"
 end
@@ -599,6 +688,32 @@ function a6_CBT(a2,a4)
     n6m = 0 
     
     a6_CBT = f_ev_c6(n00, n2m, n4m, n6m) ! Calculate a^(6) given the spectral truncation n_l^m = 0 for l>4
+end
+
+function a6_CBT_elmer(a2e,a4e)
+
+    ! "Clusure By Trancation" for a^(6) in terms of a^(2) and a^(4)
+
+    implicit none
+    
+    real(kind=dp), intent(in) :: a2e(5), a4e(9)
+    real(kind=dp) :: a6_CBT(3,3,3,3,3,3)
+    real(kind=dp) :: a6_CBT_elmer(13)
+    complex(kind=dp) :: nlm(nlm_len), n00, n2m(-2:2), n4m(-4:4), n6m(-6:6)
+        
+    nlm = a4_to_nlm_elmer(a2e, a4e)
+
+    n00 = nlm(1)
+    n2m = nlm(I_l2:(I_l4-1))
+    n4m = nlm(I_l4:(I_l6-1))
+    n6m = 0 
+    
+    a6_CBT = f_ev_c6(n00, n2m, n4m, n6m) ! Calculate a^(6) given the spectral truncation n_l^m = 0 for l>4
+    a6_CBT_elmer = (/ a6_CBT(1,1,1,1,1,1), a6_CBT(2,2,2,2,2,2), a6_CBT(1,1,1,1,1,2),&
+                      a6_CBT(1,1,1,1,2,2), a6_CBT(1,1,1,2,2,2), a6_CBT(1,1,2,2,2,2),&
+                      a6_CBT(1,2,2,2,2,2), a6_CBT(1,1,1,1,1,3), a6_CBT(1,1,1,1,2,3),&
+                      a6_CBT(1,1,1,2,2,3), a6_CBT(1,1,2,2,2,3), a6_CBT(1,2,2,2,2,3),&
+                      a6_CBT(2,2,2,2,2,3)/)
 end
 
 function da2dt_DRX_elmer(tau, a2, a4)

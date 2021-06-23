@@ -9,7 +9,7 @@ program demo
 
     ! Numerics
     real, parameter    :: dt = 0.1 ! 1/10 year
-    integer, parameter :: Nt = 2 ! Number of time steps
+    integer, parameter :: Nt = 1000 ! Number of time steps
 
     ! Constants and argv strings    
     integer, parameter :: dp = 8
@@ -27,10 +27,10 @@ program demo
 
     ! For dumping state to netCDF
     complex(kind=dp), allocatable   :: nlm_save(:,:)
-    real(kind=dp)                   :: a2_true_save(3,3,Nt), a2_save(3,3,Nt), a4_save(3,3,3,3,Nt) 
+    real(kind=dp)                   :: a2_true_save(3,3,Nt), a2_save(3,3,Nt), a4_save(3,3,3,3,Nt), a4_true_save(3,3,3,3,Nt)
     character(len=30) :: fname_sol
     integer :: ncid, c_did, time_did, dim_did, pair_did ! Dimension IDs
-    integer :: id_cre,id_cim,id_lm, id_a2, id_a2_true ! Var IDs
+    integer :: id_cre,id_cim,id_lm, id_a2, id_a2_true, id_a4, id_a4_true ! Var IDs
 
     if (command_argument_count() .ne. 1) then
         print *,'usage: ./demo ugrad'
@@ -110,6 +110,8 @@ program demo
     nlm_save(:,1)       = nlm
     a2_true_save(:,:,1) = a2 
     a2_save(:,:,1)      = a2 
+    a4_true_save(:,:,:,:,1) = a4
+    a4_save(:,:,:,:,1) = a4
     
     !-------------------------------------------------------------------
     ! Integrate
@@ -135,6 +137,7 @@ program demo
         dndt = Gamma0 * dndt_ij_DDRX(nlm, tau) ! Tau is assumed constant, but since DRX rate depends on the state itself (i.e. DRX is nonlinear), it must be called for each time step.
         nlm_save(:,tt) = nlm + dt * matmul(dndt, nlm) ! Spectral coefs evolve by a linear transformation
         a2_true_save(:,:,tt) = a2_ij(nlm)
+        a4_true_save(:,:,:,:,tt) = a4_ijkl(nlm)
 
         ! Tensorial expansion
         call daidt_DDRX(tau, Gamma0, a2, a4, da2dt, da4dt) ! Sets rate-of-change matrices da2dt and da4dt
@@ -170,8 +173,10 @@ program demo
     call check( nf90_def_var(ncid, "c_re",  NF90_DOUBLE, [c_did,   time_did], id_cre) )
     call check( nf90_def_var(ncid, "c_im",  NF90_DOUBLE, [c_did,   time_did], id_cim) )
     
-    call check( nf90_def_var(ncid, "a2",      NF90_DOUBLE, [dim_did,dim_did, time_did], id_a2) )    
+    call check( nf90_def_var(ncid, "a2",      NF90_DOUBLE, [dim_did,dim_did, time_did], id_a2) )
     call check( nf90_def_var(ncid, "a2_true", NF90_DOUBLE, [dim_did,dim_did, time_did], id_a2_true) )    
+    call check( nf90_def_var(ncid, "a4",      NF90_DOUBLE, [dim_did,dim_did,dim_did,dim_did, time_did], id_a4) )
+    call check( nf90_def_var(ncid, "a4_true", NF90_DOUBLE, [dim_did,dim_did,dim_did,dim_did, time_did], id_a4_true) )    
     
     call check( nf90_enddef(ncid) )
 
@@ -182,6 +187,8 @@ program demo
 
     call check( nf90_put_var(ncid, id_a2,      a2_save) )
     call check( nf90_put_var(ncid, id_a2_true, a2_true_save) )
+    call check( nf90_put_var(ncid, id_a4,      a4_save) )
+    call check( nf90_put_var(ncid, id_a4_true, a4_true_save) )
     
     call check( nf90_close(ncid) )
 

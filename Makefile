@@ -23,7 +23,7 @@ ALLSRCS=$(ALLOBJS:.o=.f90)
 
 .PHONY: all clean clear demo demoso elmer lib
 ########################
-all: lib$(SPECFAB).so $(ALLOBJS) $(ALLMODS) $(DEMO)
+all: lib$(SPECFAB).so $(SPECFAB)py $(ALLOBJS) $(ALLMODS) $(DEMO)
 
 lib: lib$(SPECFAB).so
 

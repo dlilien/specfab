@@ -206,6 +206,31 @@ contains
     
     !---
 
+    function convert_ae2_to_a2(ae2)
+        implicit none
+        integer, parameter :: dp = 8 ! Default precision
+        real(kind=dp), intent(in) :: ae2(5)
+        real(kind=dp) :: convert_ae2_to_a2(3,3)
+        convert_ae2_to_a2 = ae2_to_a2(ae2)
+    end
+
+    function convert_ae4_to_a4(ae2, ae4)
+        implicit none
+        integer, parameter :: dp = 8 ! Default precision
+        real(kind=dp), intent(in) :: ae2(5), ae4(9)
+        real(kind=dp) :: convert_ae4_to_a4(3,3,3,3)
+        convert_ae4_to_a4 = ae4_to_a4(ae2, ae4)
+    end
+
+    function get_nlm_elmer_a4(nlmlen, ae2, ae4)
+        implicit none
+        integer, parameter :: dp = 8 ! Default precision
+        integer, intent(in) :: nlmlen
+        real(kind=dp), intent(in) :: ae2(5), ae4(9)
+        complex(kind=dp) :: get_nlm_elmer_a4(nlmlen)
+        get_nlm_elmer_a4 = a4_to_nlm_elmer(ae2, ae4)
+    end
+
     function get_a2_ij(nlm) 
         implicit none
         integer, parameter :: dp = 8 ! Default precision
