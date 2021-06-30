@@ -8,8 +8,8 @@ program demo
     implicit none
 
     ! Numerics
-    real, parameter    :: dt = 0.1 ! 1/10 year
-    integer, parameter :: Nt = 1000 ! Number of time steps
+    real, parameter    :: dt = 0.02 ! 1/10 year
+    integer, parameter :: Nt = 5000 ! Number of time steps
 
     ! Constants and argv strings    
     integer, parameter :: dp = 8

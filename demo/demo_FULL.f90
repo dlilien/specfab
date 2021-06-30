@@ -11,13 +11,13 @@ program demo
 
     ! Numerics
     real, parameter    :: dt = 0.02 ! Time-step size
-    integer, parameter :: Nt = 10000  ! Number of time steps
-    integer            :: Lcap = 12     ! Expansion series truncation
-    real(kind=dp)      :: nu0  = 5.0d-3 ! Regularization magnitude calibrated for demo with L=12
+    integer, parameter :: Nt = 5000  ! Number of time steps
+    integer            :: Lcap = 6     ! Expansion series truncation
+    real(kind=dp)      :: nu0  = 7.0d-3 ! Regularization magnitude calibrated for demo with L=12
 
     ! Rates
     real(kind=dp), parameter :: eps_0 = 0.1
-    real(kind=dp), parameter :: Gamma0 = 1.0e-1 ! Sets DRX time scale
+    real(kind=dp), parameter :: Gamma0 = 1.0e0 ! Sets DRX time scale
     
     ! Constants and argv strings    
     integer :: ii,tt ! loop vars
@@ -137,13 +137,13 @@ program demo
 
     call savestate(nlm, 1) ! Save initial state    
     dndt_ROT = dndt_ij_LATROT(eps,omg, 0*eps,0d0,0d0,0d0, 1d0) ! Assume constant strain-rate and spin with Taylor style plastic spin for lattice rotation (beta=1).
-    dndt_REG = f_nu_eps(nu0, eps) * dndt_ij_REG() ! Regularization: nu * (reg. mag.) *  reg. matrix
+    dndt_REG = dndt_ij_CDRX() ! Regularization: nu * (reg. mag.) *  reg. matrix
     dndt_DRX = dndt_ij_DDRX(nlm, eps)
             
     do tt = 2, Nt
 !        write(*,"(A9,I3)") '*** Step ', tt
         ! Distributive property -> just add these in dndt
-        dndt = dndt_ROT + dndt_REG + Gamma0 * dndt_DRX
+        dndt = dndt_ROT + nu0 * dndt_REG + Gamma0 * dndt_DRX
         nlm = nlm + dt * matmul(dndt, nlm) ! Spectral coefficients evolve by a linear transformation
         a2_true_save(:,:,tt) = a2_ij(nlm)
 

@@ -12,8 +12,8 @@ program demo
     ! Numerics
     real, parameter    :: dt = 0.02 ! Time-step size
     integer, parameter :: Nt = 5000  ! Number of time steps
-    integer            :: Lcap = 8     ! Expansion series truncation
-    real(kind=dp)      :: nu0  = 4.0d-2 ! Regularization magnitude calibrated for demo with L=12
+    integer            :: Lcap = 6    ! Expansion series truncation
+    real(kind=dp)      :: nu0  = 7.5d-3 ! Regularization magnitude calibrated for demo with L=12
     
     ! Constants and argv strings    
     integer :: ii,tt ! loop vars
@@ -136,8 +136,8 @@ program demo
 
     call savestate(nlm, 1) ! Save initial state    
     dndt_ROT = dndt_ij_LATROT(eps,omg, 0*eps,0d0,0d0,0d0, 1d0) ! Assume constant strain-rate and spin with Taylor style plastic spin for lattice rotation (beta=1).
-    dndt_REG = f_nu_eps(nu0, eps) * dndt_ij_REG() ! Regularization: nu * (reg. mag.) *  reg. matrix
-!    dndt_REG = 5*f_nu_eps(nu0, eps) * dndt_ij_CDRX() ! Rotation recrystalization
+    ! dndt_REG = f_nu_eps(nu0, eps) * dndt_ij_REG() ! Regularization: nu * (reg. mag.) *  reg. matrix
+    dndt_REG = nu0 * dndt_ij_CDRX() ! Rotation recrystalization
             
     do tt = 2, Nt
 !        write(*,"(A9,I3)") '*** Step ', tt
