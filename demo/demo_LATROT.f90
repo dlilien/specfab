@@ -1,4 +1,4 @@
-! N. M. Rathmann <rathmann@nbi.ku.dk> and D. A. Lilien <dlilien90@gmail.com>, 2020
+! n. M. Rathmann <rathmann@nbi.ku.dk> and D. A. Lilien <dlilien90@gmail.com>, 2020
 
 program demo
 
@@ -12,8 +12,8 @@ program demo
     ! Numerics
     real, parameter    :: dt = 0.02 ! Time-step size
     integer, parameter :: Nt = 5000  ! Number of time steps
-    integer            :: Lcap = 12     ! Expansion series truncation
-    real(kind=dp)      :: nu0  = 5.0d-3 ! Regularization magnitude calibrated for demo with L=12
+    integer            :: Lcap = 8     ! Expansion series truncation
+    real(kind=dp)      :: nu0  = 4.0d-2 ! Regularization magnitude calibrated for demo with L=12
     
     ! Constants and argv strings    
     integer :: ii,tt ! loop vars
@@ -126,6 +126,7 @@ program demo
     a2 = a2_ij(nlm) ! Init corresponding tensorial formulation
     a2_true_save(:,:,1) = a2 
     a4_true_save(:,:,:,:,1) = a4_ijkl(nlm)
+    nlm_save(:, 1) = nlm
     
     write(*,"(A13,I4,A5,F12.10,A4,I2,A10,I3,A1)") 'Numerics: Nt=', Nt, ', dt=', dt, ', L=', Lcap, ' (nlm_len=',nlm_len,')'
 
@@ -141,6 +142,7 @@ program demo
 !        write(*,"(A9,I3)") '*** Step ', tt
         dndt = dndt_ROT + dndt_REG 
         nlm = nlm + dt * matmul(dndt, nlm) ! Spectral coefficients evolve by a linear transformation
+        nlm_save(:, tt) = nlm
         a2_true_save(:,:,tt) = a2_ij(nlm)
         a4_true_save(:,:,:,:,tt) = a4_ijkl(nlm)
         call savestate(nlm, tt)
