@@ -17,7 +17,7 @@ program demo
     character(len=5) :: arg_exp 
 
     ! Fabric state and evolution
-    integer, parameter :: Lcap = 4 ! Expansion series truncation
+    integer, parameter :: Lcap = 12 ! Expansion series truncation
     complex(kind=dp), allocatable :: nlm(:), nlmiso(:), dndt(:,:) ! Series expansion coefs and evolution matrix
     real(kind=dp) :: a2(3,3), a4(3,3,3,3), da2dt(3,3), da4dt(3,3,3,3)
     real(kind=dp) :: ugrad(3,3), tau(3,3) ! Large-scale deformation tensors

@@ -1,4 +1,4 @@
-! N. M. Rathmann <rathmann@nbi.ku.dk> and D. A. Lilien <dlilien90@gmail.com>, 2020
+! n. M. Rathmann <rathmann@nbi.ku.dk> and D. A. Lilien <dlilien90@gmail.com>, 2020
 
 program demo
 
@@ -12,24 +12,22 @@ program demo
     ! Numerics
     real, parameter    :: dt = 0.02 ! Time-step size
     integer, parameter :: Nt = 5000  ! Number of time steps
-    integer            :: Lcap = 6     ! Expansion series truncation
+    integer            :: Lcap = 12    ! Expansion series truncation
     real(kind=dp)      :: nu0  = 7.0d-3 ! Regularization magnitude calibrated for demo with L=12
-
-    ! Rates
-    real(kind=dp), parameter :: eps_0 = 0.1
-    real(kind=dp), parameter :: Gamma0 = 1.0e0 ! Sets DRX time scale
     
     ! Constants and argv strings    
     integer :: ii,tt ! loop vars
     character(len=5) :: arg_exp ! experiment type (see below)
+    real(kind=dp)    :: eps_0 = 1.0e-1
+
 
     ! Fabric state and evolution
-    complex(kind=dp), allocatable :: nlm(:), dndt(:,:), dndt_ROT(:,:), dndt_REG(:,:), dndt_DRX(:,:) ! Series expansion coefs and evolution matrix
+    complex(kind=dp), allocatable :: nlm(:), dndt(:,:), dndt_ROT(:,:), dndt_REG(:,:) ! Series expansion coefs and evolution matrix
     real(kind=dp) :: ugrad(3,3), eps(3,3), omg(3,3) ! Large-scale deformation
 
-    ! For comparison to Elmer/Ice
-    real(kind=dp) :: a2(3,3), a4(3,3,3,3)
-    real(kind=dp) :: a2_true_save(3,3,Nt)
+    ! Output for comparison
+    real(kind=dp) :: a2(3,3)
+    real(kind=dp) :: a2_true_save(3,3,Nt), a4_true_save(3,3,3,3,Nt)
 
     ! For dumping state to netCDF
     complex(kind=dp), allocatable   :: nlm_save(:,:)
@@ -37,7 +35,7 @@ program demo
     real(kind=dp), dimension(3,Nt)  :: e1_save,e2_save,e3_save, p23_save,p12_save,p13_save, q23_save,q12_save,q13_save
     character(len=30) :: fname_sol
     integer :: ncid, c_did, time_did, eig_did, dim_did, pair_did ! Dimension IDs
-    integer :: id_cre,id_cim,id_lm, id_eig, id_e1,id_e2,id_e3, id_p23,id_p12,id_p13, id_q23,id_q12,id_q13, id_a2_true ! Var IDs
+    integer :: id_cre,id_cim,id_lm, id_eig, id_e1,id_e2,id_e3, id_p23,id_p12,id_p13, id_q23,id_q12,id_q13,id_a2_true,id_a4_true ! Var IDs
     integer :: id_Eeiej_lin, id_Eeiej_nlin, id_Epijqij_lin, id_Epijqij_nlin ! Var IDs
 
     if (command_argument_count() .ne. 1) then
@@ -96,7 +94,7 @@ program demo
             ugrad = -1*ugrad
     end select
 
-    ugrad = eps_0 * ugrad
+    ugrad = ugrad * eps_0
 
     eps = (ugrad+transpose(ugrad))/2 ! strain-rate
     omg = (ugrad-transpose(ugrad))/2 ! spin
@@ -112,7 +110,6 @@ program demo
     allocate(dndt(nlm_len,nlm_len))
     allocate(dndt_ROT(nlm_len,nlm_len))
     allocate(dndt_REG(nlm_len,nlm_len))    
-    allocate(dndt_DRX(nlm_len,nlm_len))
 
     
     select case (arg_exp)
@@ -125,11 +122,13 @@ program demo
             nlm(1) = (1,0)
             nlm(1) = nlm(1)/f_ev_c0(nlm(1)) ! Normalize
     end select
-    
-    write(*,"(A13,I4,A5,F12.10,A4,I2,A10,I3,A1)") 'Numerics: Nt=', Nt, ', dt=', dt, ', L=', Lcap, ' (nlm_len=',nlm_len,')'
 
     a2 = a2_ij(nlm) ! Init corresponding tensorial formulation
     a2_true_save(:,:,1) = a2 
+    a4_true_save(:,:,:,:,1) = a4_ijkl(nlm)
+    nlm_save(:, 1) = nlm
+    
+    write(*,"(A13,I4,A5,F12.10,A4,I2,A10,I3,A1)") 'Numerics: Nt=', Nt, ', dt=', dt, ', L=', Lcap, ' (nlm_len=',nlm_len,')'
 
     !-------------------------------------------------------------------
     ! Integrate
@@ -137,27 +136,25 @@ program demo
 
     call savestate(nlm, 1) ! Save initial state    
     dndt_ROT = dndt_ij_LATROT(eps,omg, 0*eps,0d0,0d0,0d0, 1d0) ! Assume constant strain-rate and spin with Taylor style plastic spin for lattice rotation (beta=1).
-    dndt_REG = dndt_ij_CDRX() ! Regularization: nu * (reg. mag.) *  reg. matrix
-    dndt_DRX = dndt_ij_DDRX(nlm, eps)
+    ! dndt_REG = f_nu_eps(nu0, eps) * dndt_ij_REG() ! Regularization: nu * (reg. mag.) *  reg. matrix
+    dndt_REG = nu0 * dndt_ij_CDRX() ! Rotation recrystalization
             
     do tt = 2, Nt
 !        write(*,"(A9,I3)") '*** Step ', tt
-        ! Distributive property -> just add these in dndt
-        dndt = dndt_ROT + nu0 * dndt_REG + Gamma0 * dndt_DRX
+        dndt = dndt_ROT + dndt_REG 
         nlm = nlm + dt * matmul(dndt, nlm) ! Spectral coefficients evolve by a linear transformation
+        nlm_save(:, tt) = nlm
         a2_true_save(:,:,tt) = a2_ij(nlm)
-
+        a4_true_save(:,:,:,:,tt) = a4_ijkl(nlm)
         call savestate(nlm, tt)
-
     end do
     
     !-------------------------------------------------------------------
     ! Dump solution to netCDF
     !-------------------------------------------------------------------
     
-    write (fname_sol,"('solutions/FULL_',A5,'.nc')") arg_exp
+    write (fname_sol,"('solutions/LATROT_',A5,'.nc')") arg_exp
     call check( nf90_create(fname_sol, NF90_CLOBBER, ncid) )
-
     
     call check(nf90_put_att(ncid,NF90_GLOBAL, "tsteps", Nt))
     call check(nf90_put_att(ncid,NF90_GLOBAL, "dt",     dt))
@@ -171,7 +168,7 @@ program demo
     call check(nf90_put_att(ncid,NF90_GLOBAL, "Ecc_opt_nlin", Ecc_opt_nlin))
     call check(nf90_put_att(ncid,NF90_GLOBAL, "alpha_opt_lin",  alpha_opt_lin))
     call check(nf90_put_att(ncid,NF90_GLOBAL, "alpha_opt_nlin", alpha_opt_nlin))
-
+    
     call check( nf90_def_dim(ncid, "DOF",    nlm_len,   c_did) )
     call check( nf90_def_dim(ncid, "tstep",  Nt,        time_did) )
     call check( nf90_def_dim(ncid, "eigval", 3,         eig_did) )
@@ -196,9 +193,10 @@ program demo
     call check( nf90_def_var(ncid, "q23",     NF90_DOUBLE, [dim_did, time_did], id_q23) )
     call check( nf90_def_var(ncid, "q12",     NF90_DOUBLE, [dim_did, time_did], id_q12) )
     call check( nf90_def_var(ncid, "q13",     NF90_DOUBLE, [dim_did, time_did], id_q13) )
-
-    call check( nf90_def_var(ncid, "a2_true", NF90_DOUBLE, [dim_did,dim_did, time_did], id_a2_true) )    
     
+    call check( nf90_def_var(ncid, "a2_true", NF90_DOUBLE, [dim_did,dim_did, time_did], id_a2_true) )    
+    call check( nf90_def_var(ncid, "a4_true", NF90_DOUBLE, [dim_did,dim_did,dim_did,dim_did, time_did], id_a4_true) )    
+
     call check( nf90_enddef(ncid) )
     
     call check( nf90_put_var(ncid, id_cre,   real(nlm_save)) )
@@ -219,14 +217,14 @@ program demo
     call check( nf90_put_var(ncid, id_q23,  q23_save) )
     call check( nf90_put_var(ncid, id_q12,  q12_save) )
     call check( nf90_put_var(ncid, id_q13,  q13_save) )
-
-    call check( nf90_put_var(ncid, id_a2_true, a2_true_save) )
     
+    call check( nf90_put_var(ncid, id_a2_true, a2_true_save) )
+    call check( nf90_put_var(ncid, id_a4_true, a4_true_save) )
     call check( nf90_close(ncid) )
 
     print *, 'Solution dumped in ', fname_sol
     print *, "Plot result:"
-    write(*,"(A25,A5)") "python3 plot_demo_FULL.py ", arg_exp
+    write(*,"(A28,A5)") "python3 plot_demo_LATROT.py ", arg_exp
 
 contains
 
