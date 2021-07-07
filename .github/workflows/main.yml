@@ -13,8 +13,9 @@ jobs:
       TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
     steps:
       - name: Build manylinux wheels
-        uses: 'docker'
-        image: 'Dockerfile'
+        runs:
+         using: 'docker'
+         image: 'Dockerfile'
       - name: Deploy manylinux
         run: |
             twine upload wheelhouse/*manylinux*.whl
