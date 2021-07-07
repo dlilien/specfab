@@ -62,8 +62,6 @@ jobs:
         run: ln -s /usr/local/bin/gfortran-9 /usr/local/bin/gfortran
       - name: Install homebrew deps
         run: brew install fftw netcdf lapack
-      - name: Check
-        run: ls /usr/local/lib
       - name: Build specfab
         run: |
           make lib
@@ -74,9 +72,13 @@ jobs:
       - name: build wheel
         run: |
           pip install wheel
-          pip wheel --no-deps .
+          pip wheel --no-deps -w ~/dist/ .
+      - name: Delocate Wheel
+        run: |
+            pip install delocate
+            delocate-wheel -w ~/fixed_wheels -v ~/dist/*.whl
       - name: upload wheel
         run: |
           pip install twine
-          twine upload dist/*
+          twine upload ~/fixed_wheels/*
         continue-on-error: true
