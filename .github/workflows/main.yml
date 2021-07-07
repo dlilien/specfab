@@ -12,10 +12,10 @@ jobs:
       TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
       TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
     steps:
-      - name: Build and upload manylinux wheels
-        uses: docker/build-push-action@v2
-        with:
-          python-versions: "3.*"
+      - name: Build manylinux wheels
+        using: 'docker'
+        image: 'Dockerfile'
+      - name: Deploy manylinux
         run: |
             twine upload wheelhouse/*manylinux*.whl
 
