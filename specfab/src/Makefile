@@ -10,7 +10,7 @@ endif
 $(info $$FC is [${FC}])
 
 COMPILER=$(FC) -ffree-line-length-none -m64 -Wall -fPIC
-OPTS=-O1 -mcmodel=medium -lm -llapack -lblas -lfftw3
+OPTS=-O1 -mcmodel=medium -L/usr/local/lib -lm -llapack -lblas -lfftw3
 OPTSNETCDF=-lnetcdff -I/usr/include -L/usr/lib 
 
 SPECFAB=specfab

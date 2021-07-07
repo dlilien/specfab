@@ -3,7 +3,7 @@
 
 # Install non-python dependencies
 yum install -y lapack-devel fftw-devel
-export LD_LIBRARY_PATH=`$PWD`/specfab/src:$LD_LIBRARY_PATH 
+export LD_LIBRARY_PATH=/github/workspace/specfab/src:$LD_LIBRARY_PATH 
 export LD_LIBRARY_PATH=/opt/rh/devtoolset-9/root/lib/gcc/x86_64-redhat-linux/9:$LD_LIBRARY_PATH 
 export FC=/opt/rh/devtoolset-9/root/usr/bin/gfortran
 export PLAT=manylinux2014_x86_64
@@ -19,5 +19,5 @@ done
 
 # Make the wheels into manylinux
 for whl in wheelhouse/*.whl; do
-    auditwheel repair "$whl" --plat $PLAT -w `$PWD`/wheelhouse/;
+    auditwheel repair "$whl" --plat $PLAT -w /github/workspace/wheelhouse/;
 done
