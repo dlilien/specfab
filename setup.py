@@ -2,7 +2,7 @@ from numpy.distutils.core import Extension
 from numpy.distutils.core import setup
 
 
-extension_module = Extension(name='specfab._specfabpy',
+extension_module = Extension(name='specfab.specfabpy',
                              sources=['specfab/src/specfabpy.f90'],
                              library_dirs=['specfab/src'],
                              libraries=['specfab'],

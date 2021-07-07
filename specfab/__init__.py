@@ -10,7 +10,7 @@
 
 """
 
-from ._specfabpy import specfabpy as sf
+from specfab.specfabpy import specfabpy as sf
 
 
 def a2_ij(nlm):

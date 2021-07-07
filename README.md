@@ -2,7 +2,7 @@
 A spectral fabric model of kinematic lattice (c-axis) rotation (Svendsen and
 Hutter, 1996) and dynamic recrystallization (Placidi and others, 2010).
 
-![image](githubimg.jpg)
+![image](specfab/static/githubimg.jpg)
 **Lattice rotation:** <br>
 Rathmann, N., Hvidberg, C., Grinsted, A., Lilien, D., & Dahl-Jensen, D. (2021). Effect of an orientation-dependent non-linear grain fluidity on bulk directional enhancement factors. Journal of Glaciology, 67(263), 569-575. doi:10.1017/jog.2020.117
 
