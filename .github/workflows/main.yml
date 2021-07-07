@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Build manylinux wheels
-        uses: ./docker_build.yml
+        uses: ./
       - name: Deploy manylinux
         run: |
             twine upload wheelhouse/*manylinux*.whl
@@ -65,7 +65,7 @@ jobs:
       - name: build wheel
         run: |
           pip install wheel
-          python setup.py bdist_wheel
+          pip wheel --no-deps
       - name: upload wheel
         run: |
           pip install twine
