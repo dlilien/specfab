@@ -14,11 +14,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Build manylinux wheels
+      - name: Build and deploy manylinux wheels
         uses: ./
-      - name: Deploy manylinux
-        run: |
-            twine upload wheelhouse/*manylinux*.whl
 
   # deploy source distribution
   Source-dist:
@@ -53,6 +50,7 @@ jobs:
       TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
       TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
       FC: gfortran-9
+      CC: gcc-9
       DYLD_FALLBACK_LIBRARY_PATH: /usr/local/lib
     strategy:
       matrix:

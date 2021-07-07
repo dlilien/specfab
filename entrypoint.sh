@@ -22,3 +22,5 @@ ls wheelhouse/*.whl
 for whl in wheelhouse/*.whl; do
     auditwheel repair "$whl" --plat $PLAT -w /github/workspace/wheelhouse/;
 done
+
+python -m twine upload /github/workspace/wheelhouse/*manylinux*.whl
