@@ -55,7 +55,7 @@ jobs:
       FC: gfortran-9
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [macos-latest]
         python-version: [3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
@@ -69,7 +69,6 @@ jobs:
           pip install -r requirements.txt
       - name: Build specfab
         run: |
-          cd specfab
           make lib
       - name: build wheel
         run: |
