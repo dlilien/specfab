@@ -72,10 +72,11 @@ jobs:
       - name: build wheel
         run: |
           pip install wheel
-          pip wheel --no-deps -w /Users/runner/work/specfab/specfab/dist/ .
+          pip wheel -w /Users/runner/work/specfab/specfab/dist/ .
       - name: Delocate Wheel
         run: |
             pip install delocate
+            ls /Users/runner/work/specfab/specfab/specfab/src/
             delocate-listdeps --all /Users/runner/work/specfab/specfab/dist/*.whl
             delocate-wheel -w /Users/runner/work/specfab/specfab/fixed_wheels/ -v /Users/runner/work/specfab/specfab/dist/*.whl
       - name: upload wheel
