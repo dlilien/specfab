@@ -91,6 +91,7 @@ jobs:
     env:
       TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
       TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+      FC: gfortran
     strategy:
       matrix:
         os: [windows-latest]

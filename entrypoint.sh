@@ -14,10 +14,11 @@ make lib
 # Do a normal build
 for PYBIN in /opt/python/cp38-cp*/bin; do
     "${PYBIN}/pip" install numpy==1.19.0 cython;
-    "${PYBIN}/pip" wheel --no-deps -w wheelhouse/ .;
+    "${PYBIN}/pip" wheel --no-deps -w /github/workspace/wheelhouse/ .;
 done
 
 # Make the wheels into manylinux
+ls wheelhouse/*.whl
 for whl in wheelhouse/*.whl; do
     auditwheel repair "$whl" --plat $PLAT -w /github/workspace/wheelhouse/;
 done
