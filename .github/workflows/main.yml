@@ -16,8 +16,8 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           python-versions: "3.*"
-        # if true then github actions won't stop even if build for this job fails
-        continue-on-error: true
+        run: |
+            twine upload wheelhouse/*manylinux*.whl
 
   # deploy source distribution
   Source-dist:

@@ -10,8 +10,4 @@
 
 """
 
-from specfab.specfabpy import specfabpy as sf
-
-
-def a2_ij(nlm):
-    return sf.get_a2_ij(nlm)
+from .specfabpy import specfabpy as sf
