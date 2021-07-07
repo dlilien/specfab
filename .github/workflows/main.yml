@@ -13,7 +13,7 @@ jobs:
       TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
     steps:
       - name: Build manylinux wheels
-        using: 'docker'
+        uses: 'docker'
         image: 'Dockerfile'
       - name: Deploy manylinux
         run: |
