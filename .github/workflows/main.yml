@@ -78,9 +78,9 @@ jobs:
       - name: Delocate Wheel
         run: |
             pip install delocate
-            ls /Users/runner/work/specfab/specfab/specfab/src/
-            delocate-listdeps --all /Users/runner/work/specfab/specfab/dist/*.whl
-            delocate-wheel -w /Users/runner/work/specfab/specfab/fixed_wheels/ -v /Users/runner/work/specfab/specfab/dist/*.whl
+            pwd
+            ls
+            delocate-wheel -L lib -w /Users/runner/work/specfab/specfab/fixed_wheels/ -v /Users/runner/work/specfab/specfab/dist/*.whl
       - name: upload wheel
         run: |
           pip install twine
