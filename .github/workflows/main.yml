@@ -47,7 +47,7 @@ jobs:
   # Build and deploy wheels for macos and windows using setup-python action.
   # This has nothing to do with manylinux-wheel-builder.
   # I have just put them for the purpose of completion.
-  Matrix-build:
+  Mac-build:
     runs-on: ${{ matrix.os }}
     env:
       TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
@@ -81,7 +81,7 @@ jobs:
           twine upload dist/*
         continue-on-error: true
 
-  Matrix-build:
+  Windows-build:
     runs-on: ${{ matrix.os }}
     env:
       TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
