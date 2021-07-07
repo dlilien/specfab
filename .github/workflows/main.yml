@@ -47,7 +47,7 @@ jobs:
       TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
       TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
       FC: gfortran-9
-      DYLD_FALLBACK_LIBRARY_PATH: /usr/local/lib
+      DYLD_FALLBACK_LIBRARY_PATH: /usr/local/lib:/Users/runner/work/specfab/specfab/specfab/src/
     strategy:
       matrix:
         os: [macos-latest]
@@ -72,13 +72,14 @@ jobs:
       - name: build wheel
         run: |
           pip install wheel
-          pip wheel --no-deps -w ~/dist/ .
+          pip wheel --no-deps -w /Users/runner/work/specfab/specfab/dist/ .
       - name: Delocate Wheel
         run: |
             pip install delocate
-            delocate-wheel -w ~/fixed_wheels -v ~/dist/*.whl
+            delocate-listdeps --all /Users/runner/work/specfab/specfab/dist/*.whl
+            delocate-wheel -w /Users/runner/work/specfab/specfab/fixed_wheels/ -v /Users/runner/work/specfab/specfab/dist/*.whl
       - name: upload wheel
         run: |
           pip install twine
-          twine upload ~/fixed_wheels/*
+          twine upload /Users/runner/work/specfab/specfab/fixed_wheels/*.whl
         continue-on-error: true
