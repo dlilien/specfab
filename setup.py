@@ -10,7 +10,7 @@ extension_module = Extension(name='specfab.specfabpy',
 
 if __name__ == '__main__':
     setup(name='specfab',
-          version='1.0',
+          version='1.0.1',
           description='This is a python version of Specfab',
           ext_modules=[extension_module],
           packages=['specfab'])
