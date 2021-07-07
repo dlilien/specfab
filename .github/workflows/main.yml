@@ -53,6 +53,7 @@ jobs:
       TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
       TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
       FC: gfortran-9
+      DYLD_FALLBACK_LIBRARY_PATH: /usr/local/lib
     strategy:
       matrix:
         os: [macos-latest]
@@ -65,6 +66,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install homebrew deps
         run: brew install fftw netcdf lapack
+      - name: Check
+        run: ls /usr/local/lib
       - name: Build specfab
         run: |
           make lib
