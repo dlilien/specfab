@@ -1,7 +1,15 @@
 # N. M. Rathmann <rathmann@nbi.ku.dk> and D. A. Lilien <dlilien90@gmail.com>, 2020-2021
 
 #COMPILER=ifort -free -xHost -shared-intel -align all  -debug all -qopt-report-phase=vec -diag-disable 8291 -diag-disable 8290  
-COMPILER=gfortran -ffree-line-length-none -m64 -Wall -fPIC
+
+# Rather than specify compiler, allow override of default gfortran
+ifndef FC
+	FC=gfortran
+endif
+
+$(info $$FC is [${FC}])
+
+COMPILER=$(FC) -ffree-line-length-none -m64 -Wall -fPIC
 OPTS=-O1 -mcmodel=medium -lm -llapack -lblas -lfftw3
 OPTSNETCDF=-lnetcdff -I/usr/include -L/usr/lib 
 
