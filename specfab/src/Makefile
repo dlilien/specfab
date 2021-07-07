@@ -49,7 +49,7 @@ $(SPECFAB).o: $(MOMENTS).o $(GAUNT).o $(SPECFAB).f90
 	$(COMPILER) $(OPTS) -c $(TENPROD).f90 
 	$(COMPILER) $(OPTS) -c $(SPECFAB).f90
 
-lib$(SPECFAB).$SUFF): $(ALLSRCS) $(ALLOBJS)
+lib$(SPECFAB).$(SUFF): $(ALLSRCS) $(ALLOBJS)
 	$(COMPILER) $(OPTS) -shared $(ALLSRCS) -o $@
 
 
