@@ -40,3 +40,44 @@ jobs:
           pip install twine
           twine upload dist/*
         continue-on-error: true
+
+  Mac-build:
+    runs-on: ${{ matrix.os }}
+    env:
+      TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+      TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+      FC: gfortran-9
+      DYLD_FALLBACK_LIBRARY_PATH: /usr/local/lib
+    strategy:
+      matrix:
+        os: [macos-latest]
+        python-version: [3.7]
+        # [3.6, 3.7, 3.8, 3.9]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Symlink fortran
+        run: ln -s /usr/local/bin/gfortran-9 /usr/local/bin/gfortran
+      - name: Install homebrew deps
+        run: brew install fftw netcdf lapack
+      - name: Check
+        run: ls /usr/local/lib
+      - name: Build specfab
+        run: |
+          make lib
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: build wheel
+        run: |
+          pip install wheel
+          pip wheel --no-deps .
+      - name: upload wheel
+        run: |
+          pip install twine
+          twine upload dist/*
+        continue-on-error: true
