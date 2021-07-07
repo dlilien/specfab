@@ -9,6 +9,11 @@ endif
 
 $(info $$FC is [${FC}])
 
+ifeq ($(UNAME), Linux)
+	SUFF=so
+else
+	SUFF=dylib
+endif
 COMPILER=$(FC) -ffree-line-length-none -m64 -Wall -fPIC
 OPTS=-O1 -mcmodel=medium -L/usr/local/lib -lm -llapack -lblas -lfftw3
 OPTSNETCDF=-lnetcdff -I/usr/include -L/usr/lib 
@@ -26,15 +31,16 @@ ALLSRCS=$(ALLOBJS:.o=.f90)
 ########################
 # Phony targets
 ########################
-all: lib$(SPECFAB).so $(ALLOBJS) $(ALLMODS)
+all: lib$(SPECFAB).$(SUFF) $(ALLOBJS) $(ALLMODS)
 
-lib: lib$(SPECFAB).so
+lib: lib$(SPECFAB).$(SUFF)
 
 clean:
-	rm -f *.o *.mod *.so
+	rm -f *.o *.mod *.$(SUFF)
 	
 clear:
-	rm -f $(SPECFAB).o $(SPECFAB).mod *.so
+	rm -f $(SPECFAB).o $(SPECFAB).mod *.$(SUFF)
+
 ########################
 # Top-level targets
 ########################
@@ -43,7 +49,7 @@ $(SPECFAB).o: $(MOMENTS).o $(GAUNT).o $(SPECFAB).f90
 	$(COMPILER) $(OPTS) -c $(TENPROD).f90 
 	$(COMPILER) $(OPTS) -c $(SPECFAB).f90
 
-lib$(SPECFAB).so: $(ALLSRCS) $(ALLOBJS)
+lib$(SPECFAB).$SUFF): $(ALLSRCS) $(ALLOBJS)
 	$(COMPILER) $(OPTS) -shared $(ALLSRCS) -o $@
 
 
