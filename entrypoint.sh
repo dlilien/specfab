@@ -12,7 +12,7 @@ export PLAT=manylinux2014_x86_64
 make lib
 
 # Do a normal build
-for PYBIN in /opt/python/cp38-cp*/bin; do
+for PYBIN in /opt/python/cp3[7-9]-cp*/bin; do
     "${PYBIN}/pip" install numpy==1.19.0 cython;
     "${PYBIN}/pip" wheel --no-deps -w /github/workspace/wheelhouse/ .;
 done
@@ -23,4 +23,4 @@ for whl in wheelhouse/*.whl; do
     auditwheel repair "$whl" --plat $PLAT -w /github/workspace/wheelhouse/;
 done
 
-python -m twine upload /github/workspace/wheelhouse/*manylinux*.whl
+/opt/python/cp37-cp37m/bin/python3 -m twine upload /github/workspace/wheelhouse/*manylinux*.whl
