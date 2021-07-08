@@ -7,13 +7,19 @@ ifndef FC
 	FC=gfortran
 endif
 
-$(info $$FC is [${FC}])
-
-ifeq ($(UNAME), Linux)
-	SUFF=so
+SUFF:=
+ifeq ($(OS),Windows_NT)
+  SUFF=ldd
 else
-	SUFF=dylib
+  UNAME_S := $(shell uname -s)
+  ifeq ($(UNAME_S),Darwin)
+    SUFF=dylib
+  else
+    SUFF=so
+  endif
 endif
+
+
 COMPILER=$(FC) -ffree-line-length-none -m64 -Wall -fPIC
 OPTS=-O1 -mcmodel=medium -L/usr/local/lib -lm -llapack -lblas -lfftw3
 OPTSNETCDF=-lnetcdff -I/usr/include -L/usr/lib 
